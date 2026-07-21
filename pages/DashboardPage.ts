@@ -30,14 +30,11 @@ export class DashboardPage extends BasePage {
    * Environment housekeeping, not coverage: the Shifts module is out of scope, so nothing
    * here is asserted and both prompts are optional.
    */
-  async clearShiftPrompts(): Promise<string[]> {
-    const handled: string[] = [];
-
+  async clearShiftPrompts() {
     if (await this.endShiftDialog.isVisible()) {
       // The amount pre-fills with the expected drawer total, leaving Difference $0.00.
       await this.shiftConfirmButton.click();
       await this.endShiftDialog.waitFor({ state: 'hidden' });
-      handled.push('end-shift');
 
       // Ending a shift normally chains into starting the next one. Wait for that, but
       // tolerate it not happening - only a timeout is acceptable here, so a broken
@@ -54,10 +51,7 @@ export class DashboardPage extends BasePage {
       await this.shiftAmountInput.fill(OPENING_FLOAT);
       await this.shiftConfirmButton.click();
       await this.startShiftDialog.waitFor({ state: 'hidden' });
-      handled.push('start-shift');
     }
-
-    return handled;
   }
 
   async openCashier() {
