@@ -1,21 +1,22 @@
 {
   "name": "cinesync",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "description": "End-to-end Playwright automation of the CINEsync POS cash ticket-purchase flow.",
   "scripts": {
     "test": "playwright test --project=chromium",
     "test:headed": "playwright test --project=chromium --headed",
     "test:debug": "playwright test --project=chromium --debug",
     "test:ui": "playwright test --ui",
-    "explore": "playwright test tests/_explore.spec.ts --project=chromium --headed --reporter=line",
     "report": "playwright show-report"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "playwright",
+    "typescript",
+    "test-automation",
+    "e2e",
+    "page-object-model"
+  ],
+  "author": "Chamath Ishanka",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {

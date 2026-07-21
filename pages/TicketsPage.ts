@@ -3,27 +3,22 @@ import { BasePage } from './BasePage';
 
 export class TicketsPage extends BasePage {
   readonly movieRows = this.page.locator('.movieRowWrap');
-  // .hide marks unavailable (past/sold-out) showtimes - excluding it keeps
-  // selection to a genuinely available movie regardless of the current lineup.
+  // .hide marks past/sold-out showtimes, keeping selection to an available one.
   readonly availableMovieCards = this.page.locator('.movieEventCardWrap:not(.hide)');
   readonly rateCards = this.page.locator('.tarifCardsRow > *');
 
-  // Rates are grouped under visible section headings ("Ticket rates" vs "Combo tickets
-  // rates"). Anchor to the seat-ticket section by its heading text - a user-facing signal
-  // that separates it from combos semantically, not by a structural quirk.
+  // Anchored on the visible heading so the "Combo tickets rates" section is excluded.
   readonly ticketRatesSection = this.page
     .locator('.tarifsSection')
     .filter({ has: this.page.getByText('Ticket rates', { exact: true }) });
 
-  // Within that section, a real seat ticket is a .ticketCard carrying a .seatTypeBadge.
-  // The badge filter still excludes the "Member Birthday Validate" card in the same
-  // section (no badge -> clicking it opens a membership modal). Result: any genuinely
-  // selectable seat ticket, regardless of the current rate lineup.
+  // The .seatTypeBadge filter is required: it skips the badge-less "Member Birthday
+  // Validate" card, which opens a membership modal instead of adding a ticket.
   readonly seatTicketCards = this.ticketRatesSection
     .locator('button.ticketCard')
     .filter({ has: this.page.locator('.seatTypeBadge') });
 
-  // Cart / order summary (right panel).
+  // Cart / order summary.
   readonly cartBody = this.page.locator('.basketBody');
   readonly emptyCartMessage = this.page.getByText('Cart is empty');
   readonly cartTotal = this.page.locator('.summaryContainer .total .contentValue');
@@ -42,14 +37,17 @@ export class TicketsPage extends BasePage {
   }
 
   /**
-   * Selects the first available seat ticket type and returns its name (e.g. "Adult"),
-   * so the caller can assert dynamically without hardcoding a rate. Clicking a card
-   * adds that ticket to the cart.
+   * Selects the first available seat ticket (which adds it to the cart) and returns its
+   * name, e.g. "Adult", so callers can assert on it without hardcoding a rate.
    */
   async selectFirstAvailableTicketType(): Promise<string> {
     const card = this.seatTicketCards.first();
     const typeName = (await card.locator('.titleTxt').innerText()).trim();
     await card.click();
     return typeName;
+  }
+
+  async proceedToCheckout() {
+    await this.continueButton.click();
   }
 }

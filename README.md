@@ -4,7 +4,7 @@ End-to-end UI automation of a standard cinema ticket purchase (Cash payment) on 
 built with **Playwright** + **TypeScript** using the **Page Object Model**.
 
 The suite drives the real flow: log in → open the Cashier module → navigate to Ticketing → select an
-available movie → (in progress) select a ticket type → checkout → pay by cash.
+available movie → select a ticket type → checkout → pay by cash → complete the sale.
 
 ---
 
@@ -67,7 +67,7 @@ npx playwright test tests/ticket-purchase.spec.ts --project=chromium
 │   ├── DashboardPage.ts     #   Step 2 — Cashier / Customer Display / Logout
 │   ├── CashierPage.ts       #   Step 3 — Cashier module shell + Ticketing nav
 │   ├── TicketsPage.ts       #   Steps 4-5 — movie & ticket-type selection
-│   └── CheckoutPage.ts      #   Steps 6-7 — checkout & cash payment (in progress)
+│   └── CheckoutPage.ts      #   Steps 6-7 — checkout & cash payment
 ├── tests/
 │   └── ticket-purchase.spec.ts   # The end-to-end purchase scenario
 └── playwright.config.ts
@@ -86,17 +86,3 @@ npx playwright test tests/ticket-purchase.spec.ts --project=chromium
   instead of fixed `waitForTimeout` sleeps.
 - **Serial execution (`workers: 1`)** — the QA license is single-seat, so concurrent logins invalidate
   each other's session; the suite runs one worker to keep the session stable.
-
-## Scope
-
-**In scope** (per the assignment): the login → Cashier → Ticketing → movie → ticket type → checkout →
-**Cash** payment flow, with assertions throughout.
-
-**Out of scope** (per the assignment): other payment methods, refunds, ticket cancellation, customer
-management, memberships, discounts/promotions, the Customer Display module, logout, and any other POS
-modules.
-
-## Current coverage
-
-Implemented and passing end-to-end through ticket-type selection (Steps 1–5) — a ticket is selected and
-added to the cart. Checkout and cash payment (Steps 6–7) are in active development.
