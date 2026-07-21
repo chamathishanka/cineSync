@@ -18,9 +18,7 @@ test.describe('CINEsync ticket purchase - Cash payment', () => {
     const dashboardPage = new DashboardPage(page);
     await expect(dashboardPage.cashierCard).toBeVisible();
     // A shift prompt can overlay the dashboard and swallow the click - clear it if shown.
-    // Reported so CI can show whether the prompt appeared and was handled.
-    const shiftPrompts = await dashboardPage.clearShiftPrompts();
-    console.log(`SHIFT_PROMPT: ${shiftPrompts.length ? shiftPrompts.join(' -> ') : 'none'}`);
+    await dashboardPage.clearShiftPrompts();
     await expect(dashboardPage.customerDisplayCard).toBeVisible();
     await expect(dashboardPage.logoutCard).toBeVisible();
 
