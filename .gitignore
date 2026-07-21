@@ -9,3 +9,6 @@ node_modules/
 
 # Env
 .env
+
+# Private dev notes (interview prep - not for evaluators)
+docs/DEV-NOTES.md

@@ -2,8 +2,11 @@ import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class LoginPage extends BasePage {
-  // No real <label> elements exist in the DOM (just styled divs), so
-  // getByLabel/getByRole can't resolve these — id is the stable fallback.
+  // These inputs expose no accessible name to target on (verified against the live DOM):
+  // the "Username"/"Access code" labels are styled <div>s, not real <label for>;
+  // placeholders are empty; there is no aria-label. So getByLabel / getByPlaceholder /
+  // getByRole('textbox', { name }) can't resolve them. The #ids are stable and semantic
+  // (not generated hashes), so they are the correct, maintainable fallback.
   readonly accessCodeInput = this.page.locator('#accessCode');
   readonly licenseCodeInput = this.page.locator('#licenceCode');
   readonly continueButton = this.page.getByRole('button', { name: 'Continue' });
