@@ -4,7 +4,8 @@ name: Hourly E2E
 # file lives on `main` even though it tests the `dev` branch.
 on:
   schedule:
-    - cron: '0 * * * *'
+    # Every 30 minutes - frequent enough to eventually catch the intermittent shift prompt.
+    - cron: '0,30 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -37,7 +38,11 @@ jobs:
           LICENSE_CODE: ${{ secrets.LICENSE_CODE }}
           POS_USERNAME: ${{ secrets.POS_USERNAME }}
           POS_PASSWORD: ${{ secrets.POS_PASSWORD }}
-        run: npm test
+        # Tee the output so the summary step can report whether a shift prompt appeared.
+        # pipefail keeps the step's exit code from being masked by the pipe.
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.log
 
       - name: Write run summary
         if: always()
@@ -48,11 +53,23 @@ jobs:
             echo "## Failed" >> "$GITHUB_STEP_SUMMARY"
             echo "Download the **playwright-report** artifact below for traces and screenshots." >> "$GITHUB_STEP_SUMMARY"
           fi
+          # Did the intermittent POS shift prompt appear, and did the handler clear it?
+          # Retries mean several attempts per run, so report a prompt seen in ANY of them.
+          ALL_PROMPTS=$(grep -o 'SHIFT_PROMPT: .*' test-output.log | cut -d' ' -f2- || true)
+          HANDLED=$(echo "$ALL_PROMPTS" | grep -v '^none$' | tail -1 || true)
+          if [ -n "$HANDLED" ]; then
+            SHIFT="**HANDLED: $HANDLED**"
+          elif [ -n "$ALL_PROMPTS" ]; then
+            SHIFT='none shown'
+          else
+            SHIFT='not reached (failed before the dashboard)'
+          fi
           {
             echo ""
             echo "| | |"
             echo "|---|---|"
             echo "| Result | \`${{ steps.e2e.outcome }}\` |"
+            echo "| Shift prompt | $SHIFT |"
             echo "| Branch | \`dev\` |"
             echo "| Commit | \`$(git rev-parse --short HEAD)\` |"
             echo "| Finished | $(date -u '+%Y-%m-%d %H:%M UTC') |"
