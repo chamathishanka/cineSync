@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, errors } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 /** Opening float used when the POS asks us to start a fresh shift. */
@@ -30,12 +30,23 @@ export class DashboardPage extends BasePage {
    * Environment housekeeping, not coverage: the Shifts module is out of scope, so nothing
    * here is asserted and both prompts are optional.
    */
-  async clearShiftPrompts() {
+  async clearShiftPrompts(): Promise<string[]> {
+    const handled: string[] = [];
+
     if (await this.endShiftDialog.isVisible()) {
       // The amount pre-fills with the expected drawer total, leaving Difference $0.00.
       await this.shiftConfirmButton.click();
       await this.endShiftDialog.waitFor({ state: 'hidden' });
-      await this.startShiftDialog.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+      handled.push('end-shift');
+
+      // Ending a shift normally chains into starting the next one. Wait for that, but
+      // tolerate it not happening - only a timeout is acceptable here, so a broken
+      // locator or a strict-mode clash still surfaces instead of being swallowed.
+      await this.startShiftDialog
+        .waitFor({ state: 'visible', timeout: 5_000 })
+        .catch((error) => {
+          if (!(error instanceof errors.TimeoutError)) throw error;
+        });
     }
 
     if (await this.startShiftDialog.isVisible()) {
@@ -43,7 +54,10 @@ export class DashboardPage extends BasePage {
       await this.shiftAmountInput.fill(OPENING_FLOAT);
       await this.shiftConfirmButton.click();
       await this.startShiftDialog.waitFor({ state: 'hidden' });
+      handled.push('start-shift');
     }
+
+    return handled;
   }
 
   async openCashier() {
