@@ -1,0 +1,67 @@
+name: Hourly E2E
+
+# Scheduled workflows only fire from the repository's default branch, which is why this
+# file lives on `main` even though it tests the `dev` branch.
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ticket-purchase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the dev branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the end-to-end purchase test
+        id: e2e
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
+          LICENSE_CODE: ${{ secrets.LICENSE_CODE }}
+          POS_USERNAME: ${{ secrets.POS_USERNAME }}
+          POS_PASSWORD: ${{ secrets.POS_PASSWORD }}
+        run: npm test
+
+      - name: Write run summary
+        if: always()
+        run: |
+          if [ "${{ steps.e2e.outcome }}" = "success" ]; then
+            echo "## Passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Download the **playwright-report** artifact below for traces and screenshots." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Result | \`${{ steps.e2e.outcome }}\` |"
+            echo "| Branch | \`dev\` |"
+            echo "| Commit | \`$(git rev-parse --short HEAD)\` |"
+            echo "| Finished | $(date -u '+%Y-%m-%d %H:%M UTC') |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 7
